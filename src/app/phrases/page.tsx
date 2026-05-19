@@ -3,18 +3,17 @@
 import { useState } from "react";
 import { phraseScenes } from "@/data/phrases";
 import { addStudyRecord } from "@/lib/storage";
+import { speak } from "@/lib/speech";
+import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
 import { Volume2, ChevronLeft } from "lucide-react";
 
 export default function PhrasesPage() {
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState(0);
 
-  function speak(text: string) {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+  function speakPhrase(text: string) {
+    const s = loadVoiceSettings();
+    speak(text, { voice: getVoiceByURI(s.voiceURI), rate: s.rate, lang: s.lang });
   }
 
   function selectScene(id: string) {
@@ -85,7 +84,7 @@ export default function PhrasesPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="font-medium text-slate-800">{p.en}</div>
                 <button
-                  onClick={() => speak(p.en)}
+                  onClick={() => speakPhrase(p.en)}
                   className="text-slate-400 hover:text-primary-600 flex-shrink-0"
                   aria-label="読み上げ"
                 >
