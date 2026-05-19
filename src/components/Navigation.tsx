@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BookText, MessageSquare, Bot, BarChart3 } from "lucide-react";
+import { Home, BookOpen, BookText, MessageSquare, Bot, BarChart3, Ear } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
   { href: "/", label: "ホーム", icon: Home },
   { href: "/toeic", label: "TOEIC演習", icon: BookOpen },
+  { href: "/listening", label: "リスニング", icon: Ear },
   { href: "/vocab", label: "単語", icon: BookText },
   { href: "/phrases", label: "フレーズ", icon: MessageSquare },
   { href: "/chat", label: "AI会話", icon: Bot },

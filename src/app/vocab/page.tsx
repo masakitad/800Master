@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { vocabulary, getVocabByLevel } from "@/data/vocabulary";
 import { VocabWord } from "@/lib/types";
 import { updateVocabProgress, addStudyRecord, getDueWords, loadProgress } from "@/lib/storage";
+import { speak } from "@/lib/speech";
+import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
 import { RotateCcw, Check, X, Volume2 } from "lucide-react";
 import clsx from "clsx";
 
@@ -48,12 +50,9 @@ export default function VocabPage() {
 
   const current = words[idx];
 
-  function speak(text: string) {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+  function speakWord(text: string) {
+    const s = loadVoiceSettings();
+    speak(text, { voice: getVoiceByURI(s.voiceURI), rate: s.rate, lang: s.lang });
   }
 
   function handleAnswer(correct: boolean) {
@@ -201,7 +200,7 @@ export default function VocabPage() {
           <div className="text-xs text-slate-500 uppercase tracking-wider">{current.partOfSpeech}</div>
           <div className="flex items-center gap-2">
             <h2 className="text-4xl font-bold text-slate-800">{current.word}</h2>
-            <button onClick={() => speak(current.word)} className="p-2 text-slate-400 hover:text-primary-600">
+            <button onClick={() => speakWord(current.word)} className="p-2 text-slate-400 hover:text-primary-600">
               <Volume2 size={24} />
             </button>
           </div>
@@ -212,7 +211,7 @@ export default function VocabPage() {
               <div className="bg-slate-50 p-4 rounded-lg text-left">
                 <div className="text-sm text-slate-800 italic">"{current.example}"</div>
                 <div className="text-sm text-slate-600 mt-2">{current.exampleJp}</div>
-                <button onClick={() => speak(current.example)} className="mt-2 text-slate-400 hover:text-primary-600">
+                <button onClick={() => speakWord(current.example)} className="mt-2 text-slate-400 hover:text-primary-600">
                   <Volume2 size={16} />
                 </button>
               </div>

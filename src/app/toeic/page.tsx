@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { ToeicPart, ToeicQuestion } from "@/lib/types";
 import { toeicQuestions, getQuestionsByPart, estimateToeicScore } from "@/data/toeic-questions";
 import { addQuizResult, addStudyRecord } from "@/lib/storage";
-import { Check, X, ChevronRight, RotateCcw } from "lucide-react";
+import { speak } from "@/lib/speech";
+import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
+import { Check, X, ChevronRight, RotateCcw, Play, Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 
 const partLabels: Record<ToeicPart, { title: string; desc: string }> = {
@@ -25,6 +27,8 @@ export default function ToeicPage() {
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<{ questionId: string; selected: number; correct: boolean }[]>([]);
   const [startTime, setStartTime] = useState<number>(0);
+  const [scriptVisible, setScriptVisible] = useState(false);
+  const [playCount, setPlayCount] = useState(0);
 
   useEffect(() => {
     if (selectedPart) {
@@ -35,11 +39,30 @@ export default function ToeicPage() {
       setShowResult(false);
       setAnswers([]);
       setStartTime(Date.now());
+      setScriptVisible(false);
+      setPlayCount(0);
     }
   }, [selectedPart]);
 
   const current = questions[currentIdx];
   const allDone = currentIdx >= questions.length && questions.length > 0;
+  const isListeningPart = selectedPart && ["part1", "part2", "part3", "part4"].includes(selectedPart);
+
+  useEffect(() => {
+    if (current?.audioScript && isListeningPart && !showResult) {
+      const s = loadVoiceSettings();
+      speak(current.audioScript, { voice: getVoiceByURI(s.voiceURI), rate: s.rate, lang: s.lang });
+      setPlayCount(1);
+      setScriptVisible(false);
+    }
+  }, [currentIdx, current?.audioScript, isListeningPart, showResult]);
+
+  function playAudio() {
+    if (!current?.audioScript) return;
+    const s = loadVoiceSettings();
+    speak(current.audioScript, { voice: getVoiceByURI(s.voiceURI), rate: s.rate, lang: s.lang });
+    setPlayCount(playCount + 1);
+  }
 
   function handleAnswer() {
     if (selected === null || !current) return;
@@ -183,9 +206,27 @@ export default function ToeicPage() {
           </div>
         )}
         {current.audioScript && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded text-sm">
-            <div className="text-xs font-medium text-blue-700 mb-1">スクリプト (実際の試験では音声のみ)</div>
-            <div className="text-slate-700 whitespace-pre-wrap">{current.audioScript}</div>
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded text-sm space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <button onClick={playAudio} className="btn-primary !py-1.5 !px-3 text-sm flex items-center gap-1">
+                  <Play size={14} /> {playCount === 0 ? "再生" : "もう一度聞く"}
+                </button>
+                <span className="text-xs text-slate-500">再生回数: {playCount}</span>
+              </div>
+              <button
+                onClick={() => setScriptVisible(!scriptVisible)}
+                className="text-xs text-blue-700 hover:text-blue-900 flex items-center gap-1"
+              >
+                {scriptVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                {scriptVisible ? "スクリプトを隠す" : "スクリプトを表示"}
+              </button>
+            </div>
+            {scriptVisible && (
+              <div className="text-slate-700 whitespace-pre-wrap pt-2 border-t border-blue-200">
+                {current.audioScript}
+              </div>
+            )}
           </div>
         )}
         <h2 className="text-lg font-medium text-slate-800">{current.question}</h2>
