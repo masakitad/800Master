@@ -1,5 +1,6 @@
 let cachedVoices: SpeechSynthesisVoice[] | null = null;
 let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+let speakSeq = 0;
 
 const PREFERRED_VOICE_NAMES = [
   "Google US English",
@@ -22,7 +23,7 @@ export function isSpeechAvailable(): boolean {
 
 export async function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   if (!isSpeechAvailable()) return [];
-  if (cachedVoices) return cachedVoices;
+  if (cachedVoices && cachedVoices.length > 0) return cachedVoices;
   if (voicesPromise) return voicesPromise;
 
   voicesPromise = new Promise((resolve) => {
@@ -33,20 +34,21 @@ export async function loadVoices(): Promise<SpeechSynthesisVoice[]> {
       resolve(existing);
       return;
     }
+    let settled = false;
+    const finish = (voices: SpeechSynthesisVoice[]) => {
+      if (settled) return;
+      settled = true;
+      synth.removeEventListener("voiceschanged", handler);
+      if (voices.length > 0) cachedVoices = voices;
+      else voicesPromise = null;
+      resolve(voices);
+    };
     const handler = () => {
       const voices = synth.getVoices();
-      if (voices.length > 0) {
-        cachedVoices = voices;
-        synth.removeEventListener("voiceschanged", handler);
-        resolve(voices);
-      }
+      if (voices.length > 0) finish(voices);
     };
     synth.addEventListener("voiceschanged", handler);
-    setTimeout(() => {
-      const voices = synth.getVoices();
-      cachedVoices = voices;
-      resolve(voices);
-    }, 1500);
+    setTimeout(() => finish(synth.getVoices()), 1500);
   });
   return voicesPromise;
 }
@@ -90,9 +92,12 @@ export interface SpeakOptions {
 export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
   if (!isSpeechAvailable()) return;
   const synth = window.speechSynthesis;
+  const mySeq = ++speakSeq;
   synth.cancel();
 
   const voice = options.voice ?? (await pickBestVoice(options.lang ?? "en-US"));
+  if (mySeq !== speakSeq) return;
+
   const utter = new SpeechSynthesisUtterance(text);
   if (voice) utter.voice = voice;
   utter.lang = options.lang ?? "en-US";
@@ -102,11 +107,13 @@ export async function speak(text: string, options: SpeakOptions = {}): Promise<v
   if (options.onStart) utter.onstart = options.onStart;
   if (options.onEnd) utter.onend = options.onEnd;
 
+  synth.cancel();
   synth.speak(utter);
 }
 
 export function stopSpeech(): void {
   if (!isSpeechAvailable()) return;
+  speakSeq++;
   window.speechSynthesis.cancel();
 }
 
