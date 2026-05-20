@@ -6,9 +6,29 @@ import { getQuestionsByPart, estimateToeicScore } from "@/data/toeic-questions";
 import { addQuizResult, addStudyRecord } from "@/lib/storage";
 import { speak, stopSpeech } from "@/lib/speech";
 import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
-import { Check, X, ChevronRight, RotateCcw, Play, Eye, EyeOff, Headphones, BookText, ImageIcon, Trophy } from "lucide-react";
+import { Check, X, ChevronRight, RotateCcw, Play, Eye, EyeOff, Headphones, BookText, ImageIcon, Trophy, Sparkles, Loader } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
+
+const IMG_CACHE_KEY = "800master_part1_images";
+
+function loadImageCache(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveImageCache(cache: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // ignore quota errors
+  }
+}
 
 const partLabels: Record<ToeicPart, { title: string; desc: string; category: "listening" | "reading" }> = {
   part1: { title: "Part 1", desc: "写真描写問題", category: "listening" },
@@ -36,7 +56,45 @@ export default function ToeicPage() {
   const [scriptVisible, setScriptVisible] = useState(false);
   const [choicesTextVisible, setChoicesTextVisible] = useState(false);
   const [playCount, setPlayCount] = useState(0);
+  const [imageCache, setImageCache] = useState<Record<string, string>>({});
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const audioTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    setImageCache(loadImageCache());
+  }, []);
+
+  async function generateImage() {
+    if (!current?.photoPrompt && !current?.photoCaption) return;
+    if (!current) return;
+    setImageLoading(true);
+    setImageError(null);
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: current.photoPrompt ?? current.photoCaption }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImageError(data.error ?? "画像生成に失敗しました");
+        return;
+      }
+      const url = data.dataUrl ?? data.url;
+      if (!url) {
+        setImageError("画像が返却されませんでした");
+        return;
+      }
+      const next = { ...imageCache, [current.id]: url };
+      setImageCache(next);
+      saveImageCache(next);
+    } catch (e) {
+      setImageError(String(e));
+    } finally {
+      setImageLoading(false);
+    }
+  }
 
   function clearAudioTimers() {
     audioTimers.current.forEach((id) => clearTimeout(id));
@@ -275,24 +333,52 @@ export default function ToeicPage() {
       </div>
 
       <div className="card space-y-4">
-        {/* Part 1: 写真の代わりに写真説明 (回答後のみ表示) */}
-        {selectedPart === "part1" && current.photoCaption && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center gap-3">
-            <div className="bg-slate-200 text-slate-500 p-3 rounded-lg flex-shrink-0">
-              <ImageIcon size={32} />
-            </div>
-            <div className="flex-1 text-sm">
-              {showResult ? (
-                <>
-                  <div className="text-xs text-slate-500 mb-1">写真の状況</div>
-                  <div className="text-slate-700">{current.photoCaption}</div>
-                </>
-              ) : (
-                <div className="text-slate-500 italic">
-                  写真を想像してください (実試験では写真表示)。回答後にヒントを公開します。
-                </div>
-              )}
-            </div>
+        {/* Part 1: 写真 (生成画像 or キャプション) */}
+        {selectedPart === "part1" && (current.photoCaption || current.photoPrompt) && (
+          <div className="space-y-2">
+            {imageCache[current.id] || current.imageUrl ? (
+              <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageCache[current.id] ?? current.imageUrl}
+                  alt={current.photoCaption ?? "TOEIC Part 1 photo"}
+                  className="w-full max-h-[400px] object-contain bg-slate-50"
+                />
+              </div>
+            ) : (
+              <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                <ImageIcon className="mx-auto text-slate-400 mb-3" size={48} />
+                <div className="text-sm text-slate-700 mb-1 font-medium">{current.photoCaption}</div>
+                <p className="text-xs text-slate-500 mb-3">
+                  実試験ではここに写真が表示されます。AI画像生成で再現することもできます。
+                </p>
+                <button
+                  onClick={generateImage}
+                  disabled={imageLoading}
+                  className="btn-primary text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  {imageLoading ? (
+                    <>
+                      <Loader className="animate-spin" size={16} /> 生成中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} /> 写真を AI 生成
+                    </>
+                  )}
+                </button>
+                {imageError && (
+                  <div className="text-xs text-red-600 mt-2">
+                    {imageError.includes("not configured")
+                      ? "画像生成には OPENAI_API_KEY の設定が必要です"
+                      : imageError}
+                  </div>
+                )}
+              </div>
+            )}
+            {showResult && (imageCache[current.id] || current.imageUrl) && current.photoCaption && (
+              <div className="text-xs text-slate-500 italic">写真の状況: {current.photoCaption}</div>
+            )}
           </div>
         )}
 

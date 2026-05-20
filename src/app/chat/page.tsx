@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles, Languages } from "lucide-react";
 import { ChatMessage } from "@/lib/types";
 import { addStudyRecord } from "@/lib/storage";
+import VoiceInput from "@/components/VoiceInput";
 import clsx from "clsx";
 
 const TOPICS = [
@@ -289,9 +290,17 @@ export default function ChatPage() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type in English..."
+          placeholder="Type or speak in English..."
           className="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
           disabled={loading}
+        />
+        <VoiceInput
+          lang="en-US"
+          label="クリックして英語を話す"
+          onTranscript={(text, isFinal) => {
+            setInput(text);
+          }}
+          className="!p-3"
         />
         <button
           type="submit"

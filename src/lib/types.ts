@@ -10,6 +10,8 @@ export interface ToeicQuestion {
   audioScript?: string;
   passage?: string;
   photoCaption?: string;
+  photoPrompt?: string;
+  imageUrl?: string;
   choiceAudios?: string[];
   questionAudio?: string;
 }
