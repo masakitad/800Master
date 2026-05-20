@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ToeicQuestion } from "@/lib/types";
 import { getMockExamQuestions, estimateToeicScore } from "@/data/toeic-questions";
 import { addQuizResult, addStudyRecord } from "@/lib/storage";
@@ -24,8 +24,16 @@ export default function MockExamPage() {
   const [answers, setAnswers] = useState<{ part: string; correct: boolean }[]>([]);
   const [startTime, setStartTime] = useState(0);
   const [done, setDone] = useState(false);
+  const audioTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  function clearAudioTimers() {
+    audioTimers.current.forEach((id) => clearTimeout(id));
+    audioTimers.current = [];
+  }
 
   function startExam() {
+    clearAudioTimers();
+    stopSpeech();
     const qs = getMockExamQuestions();
     setQuestions(qs);
     setIdx(0);
@@ -42,19 +50,30 @@ export default function MockExamPage() {
 
   useEffect(() => {
     if (!started || !current || !isListening || showResult) return;
+    clearAudioTimers();
     if (current.questionAudio) speakWithSettings(current.questionAudio);
     else if (current.audioScript) speakWithSettings(current.audioScript);
     if (current.choiceAudios && (current.part === "part1" || current.part === "part2")) {
       const baseDelay = current.questionAudio || current.audioScript ? 2500 : 0;
-      current.choiceAudios.forEach((c, i) => setTimeout(() => speakWithSettings(c), baseDelay + i * 2800));
+      current.choiceAudios.forEach((c, i) => {
+        const id = setTimeout(() => speakWithSettings(c), baseDelay + i * 2800);
+        audioTimers.current.push(id);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, started, current?.id]);
 
-  useEffect(() => () => stopSpeech(), []);
+  useEffect(
+    () => () => {
+      clearAudioTimers();
+      stopSpeech();
+    },
+    []
+  );
 
   function handleAnswer() {
     if (selected === null || !current) return;
+    clearAudioTimers();
     stopSpeech();
     const correct = selected === current.correctIndex;
     setAnswers([...answers, { part: current.part, correct }]);
@@ -62,6 +81,8 @@ export default function MockExamPage() {
   }
 
   function handleNext() {
+    clearAudioTimers();
+    stopSpeech();
     setSelected(null);
     setShowResult(false);
     if (idx + 1 < questions.length) {
@@ -72,6 +93,8 @@ export default function MockExamPage() {
   }
 
   function finishExam() {
+    clearAudioTimers();
+    stopSpeech();
     const correctCount = answers.filter((a) => a.correct).length;
     const totalCount = answers.length;
     const minutes = Math.max(1, Math.round((Date.now() - startTime) / 60000));
@@ -220,12 +243,16 @@ export default function MockExamPage() {
           <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded text-sm">
             <button
               onClick={() => {
+                clearAudioTimers();
                 stopSpeech();
                 if (current.questionAudio) speakWithSettings(current.questionAudio);
                 else if (current.audioScript) speakWithSettings(current.audioScript);
                 if (current.choiceAudios && (current.part === "part1" || current.part === "part2")) {
                   const baseDelay = current.questionAudio || current.audioScript ? 2500 : 0;
-                  current.choiceAudios.forEach((c, i) => setTimeout(() => speakWithSettings(c), baseDelay + i * 2800));
+                  current.choiceAudios.forEach((c, i) => {
+                    const id = setTimeout(() => speakWithSettings(c), baseDelay + i * 2800);
+                    audioTimers.current.push(id);
+                  });
                 }
               }}
               className="btn-primary !py-1.5 !px-3 text-sm flex items-center gap-1"

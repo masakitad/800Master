@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ToeicPart, ToeicQuestion } from "@/lib/types";
 import { getQuestionsByPart, estimateToeicScore } from "@/data/toeic-questions";
 import { addQuizResult, addStudyRecord } from "@/lib/storage";
@@ -36,6 +36,12 @@ export default function ToeicPage() {
   const [scriptVisible, setScriptVisible] = useState(false);
   const [choicesTextVisible, setChoicesTextVisible] = useState(false);
   const [playCount, setPlayCount] = useState(0);
+  const audioTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  function clearAudioTimers() {
+    audioTimers.current.forEach((id) => clearTimeout(id));
+    audioTimers.current = [];
+  }
 
   useEffect(() => {
     if (selectedPart) {
@@ -66,29 +72,33 @@ export default function ToeicPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx, current?.id]);
 
-  useEffect(() => () => stopSpeech(), []);
+  useEffect(
+    () => () => {
+      clearAudioTimers();
+      stopSpeech();
+    },
+    []
+  );
 
   async function playFullAudio() {
     if (!current) return;
+    clearAudioTimers();
     if (current.questionAudio) {
       speakWithSettings(current.questionAudio);
     } else if (current.audioScript) {
       speakWithSettings(current.audioScript);
     }
     if (current.choiceAudios && selectedPart && (selectedPart === "part1" || selectedPart === "part2")) {
-      // Part1/2 では選択肢音声も連続再生
       const baseDelay = current.questionAudio || current.audioScript ? 2500 : 0;
       current.choiceAudios.forEach((c, i) => {
-        setTimeout(() => speakOnly(c, i), baseDelay + i * 2800);
+        const id = setTimeout(() => speakWithSettings(c), baseDelay + i * 2800);
+        audioTimers.current.push(id);
       });
     }
   }
 
-  function speakOnly(text: string, _idx: number) {
-    speakWithSettings(text);
-  }
-
   function replayAll() {
+    clearAudioTimers();
     stopSpeech();
     playFullAudio();
     setPlayCount(playCount + 1);
@@ -101,6 +111,7 @@ export default function ToeicPage() {
 
   function handleAnswer() {
     if (selected === null || !current) return;
+    clearAudioTimers();
     stopSpeech();
     const isCorrect = selected === current.correctIndex;
     setAnswers([...answers, { questionId: current.id, selected, correct: isCorrect }]);
@@ -109,6 +120,8 @@ export default function ToeicPage() {
   }
 
   function handleNext() {
+    clearAudioTimers();
+    stopSpeech();
     setSelected(null);
     setShowResult(false);
     setCurrentIdx(currentIdx + 1);
@@ -136,6 +149,7 @@ export default function ToeicPage() {
   }
 
   function handleReset() {
+    clearAudioTimers();
     stopSpeech();
     setSelectedPart(null);
     setQuestions([]);
