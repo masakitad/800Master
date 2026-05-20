@@ -7,6 +7,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "オフィスで女性がノートパソコンに向かってキーボードを打っている。",
+    photoPrompt: "A young professional woman sitting at a modern office desk, focused on typing on a laptop computer, natural office lighting, neutral background",
     choices: [
       "A woman is typing on a laptop.",
       "A woman is reading a newspaper.",
@@ -27,6 +28,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "スーパーマーケットの棚に商品がぎっしりと並んでいる。",
+    photoPrompt: "Supermarket aisle with fully stocked shelves of colorful product packages, bright store lighting, no people",
     choices: [
       "The shelves are empty.",
       "The shelves are stocked with products.",
@@ -47,6 +49,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "会議室で複数人が机を囲んで資料を見ながら議論している。",
+    photoPrompt: "Diverse group of business professionals gathered around a conference table, reviewing documents, engaged in discussion, modern meeting room",
     choices: [
       "People are leaving the room.",
       "People are gathered around a table.",
@@ -67,6 +70,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "工事現場で作業員がヘルメットをかぶり、設計図を確認している。",
+    photoPrompt: "Construction worker wearing a hard hat, carefully examining a blueprint at a construction site, daytime outdoor scene",
     choices: [
       "A worker is examining a blueprint.",
       "A worker is operating a forklift.",
@@ -87,6 +91,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "屋外のカフェで男性がコーヒーカップを持ち上げて口元に運んでいる。",
+    photoPrompt: "Man sitting at an outdoor cafe table, sipping coffee from a cup raised to his mouth, casual relaxed atmosphere",
     choices: [
       "He is pouring coffee into a cup.",
       "He is washing some dishes.",
@@ -107,6 +112,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "空港のチェックインカウンターで職員が乗客のパスポートを受け取って確認している。",
+    photoPrompt: "Airline agent at airport check-in counter reviewing a passenger's passport and travel document, professional uniform",
     choices: [
       "Passengers are boarding the plane.",
       "An agent is checking a document.",
@@ -127,6 +133,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "公園の歩道に沿って自転車が複数台ずらりと駐輪されている。",
+    photoPrompt: "Row of bicycles parked in a line along a park pathway, trees in background, daytime",
     choices: [
       "Bicycles are lined up along the path.",
       "Cyclists are racing on the road.",
@@ -147,6 +154,7 @@ export const toeicQuestions: ToeicQuestion[] = [
     part: "part1",
     question: "音声を聞いて、写真の描写として最も適切なものを選びなさい。",
     photoCaption: "図書館で人々が本を読んだり、ノートを取ったりしている。",
+    photoPrompt: "Library interior with people studying at tables, reading books and taking notes, bookshelves in background, calm atmosphere",
     choices: [
       "Some people are studying at the library.",
       "Books are being returned to the shelf.",

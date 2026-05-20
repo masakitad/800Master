@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, Trophy, type LucideIcon } from "lucide-react";
+import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, Trophy, Mic, type LucideIcon } from "lucide-react";
 import { loadProgress } from "@/lib/storage";
 import { UserProgress } from "@/lib/types";
 import { estimateToeicScore } from "@/data/toeic-questions";
@@ -58,6 +58,13 @@ export default function HomePage() {
             title="リスニング集中"
             description="音声クイズ・ディクテーション・音声カード"
             color="bg-cyan-500"
+          />
+          <MenuCard
+            href="/pronunciation"
+            icon={Mic}
+            title="発音練習"
+            description="マイクで発音、AI採点でスピーキング強化"
+            color="bg-emerald-500"
           />
           <MenuCard
             href="/vocab"
