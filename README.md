@@ -71,5 +71,33 @@ src/
 └── lib/              # 型定義・ストレージ・Firebase
 ```
 
+## Railway へのデプロイ
+
+このリポジトリは Railway 用に設定済みです (`railway.json`, `.nvmrc`, GitHub Actions CI)。
+
+### 初回セットアップ
+1. [Railway](https://railway.com) でアカウント作成
+2. **New Project** → **Deploy from GitHub repo** → `masakitad/800Master` を選択
+3. Railway が自動で Nixpacks を使い Next.js を検出してビルド
+4. **Settings → Networking → Generate Domain** で公開URLを発行
+5. 必要に応じて **Variables** タブで環境変数を設定:
+   - `OPENAI_API_KEY` — AI英会話・翻訳機能用 (任意)
+   - `NEXT_PUBLIC_FIREBASE_*` — クラウド同期用 (任意)
+
+### main マージで自動デプロイ
+Railway は GitHub 連携で `main` ブランチの変更を自動検知します:
+1. `main` 以外で機能ブランチを作成して開発
+2. PR を作成 → GitHub Actions の CI (ビルド検証) が走る
+3. PR を `main` にマージ
+4. Railway が main の更新を検知 → 自動で本番デプロイ
+
+設定で「Deploy on push to main」「PR Preview Environments」を有効にすると、
+PR ごとにプレビューURLも自動生成されます。
+
+### 設定ファイル
+- `railway.json`: Railway の build/deploy 設定 (Nixpacks、`npm start`、ヘルスチェック)
+- `.nvmrc`: Node.js バージョン (20)
+- `.github/workflows/ci.yml`: PR時に build verification を実行
+
 ## ライセンス
 個人利用・学習目的での使用を想定しています。
