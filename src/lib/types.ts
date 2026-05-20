@@ -9,6 +9,9 @@ export interface ToeicQuestion {
   explanation: string;
   audioScript?: string;
   passage?: string;
+  photoCaption?: string;
+  choiceAudios?: string[];
+  questionAudio?: string;
 }
 
 export interface VocabWord {

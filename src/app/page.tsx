@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, type LucideIcon } from "lucide-react";
+import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, Trophy, type LucideIcon } from "lucide-react";
 import { loadProgress } from "@/lib/storage";
 import { UserProgress } from "@/lib/types";
 import { estimateToeicScore } from "@/data/toeic-questions";
@@ -44,6 +44,13 @@ export default function HomePage() {
             title="TOEIC Part 1-7 演習"
             description="リスニング・リーディングの各パート対策"
             color="bg-blue-500"
+          />
+          <MenuCard
+            href="/mock"
+            icon={Trophy}
+            title="模擬試験"
+            description="全Partから出題、推定スコアと弱点分析"
+            color="bg-amber-500"
           />
           <MenuCard
             href="/listening"
