@@ -31,7 +31,7 @@ export default function PronunciationPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(0);
   const recognizerRef = useRef<SpeechRecognizer | null>(null);
   const available = isRecognitionAvailable();
 
@@ -46,6 +46,8 @@ export default function PronunciationPage() {
   );
 
   function startSession(cat: string | null) {
+    recognizerRef.current?.stop();
+    stopSpeech();
     setCategory(cat);
     setItems(buildItems(cat ?? undefined));
     setIdx(0);
@@ -55,6 +57,7 @@ export default function PronunciationPage() {
     setError(null);
     setDone(false);
     setHistory([]);
+    setStartTime(Date.now());
   }
 
   function playReference() {
@@ -118,11 +121,17 @@ export default function PronunciationPage() {
   }
 
   function reset() {
+    recognizerRef.current?.stop();
+    stopSpeech();
+    setListening(false);
     setCategory(null);
     setItems([]);
     setIdx(0);
     setDone(false);
     setHistory([]);
+    setTranscript("");
+    setScore(null);
+    setError(null);
   }
 
   if (!available) {

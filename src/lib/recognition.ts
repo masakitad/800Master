@@ -67,15 +67,26 @@ export class SpeechRecognizer {
         results: ArrayLike<ArrayLike<{ transcript: string; confidence: number }> & { isFinal: boolean }>;
         resultIndex: number;
       };
-      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      let finalText = "";
+      let interimText = "";
+      let lastConfidence = 0;
+      for (let i = 0; i < ev.results.length; i++) {
         const res = ev.results[i];
         const alt = res[0];
-        this.opts.onResult?.({
-          transcript: alt.transcript,
-          confidence: alt.confidence ?? 0,
-          isFinal: res.isFinal,
-        });
+        if (res.isFinal) {
+          finalText += alt.transcript;
+          lastConfidence = alt.confidence ?? lastConfidence;
+        } else {
+          interimText += alt.transcript;
+        }
       }
+      const combined = (finalText + interimText).replace(/\s+/g, " ").trim();
+      const allFinal = interimText === "" && finalText !== "";
+      this.opts.onResult?.({
+        transcript: combined,
+        confidence: lastConfidence,
+        isFinal: allFinal,
+      });
     };
     r.onerror = (e: Event) => {
       const ev = e as unknown as { error: string };
