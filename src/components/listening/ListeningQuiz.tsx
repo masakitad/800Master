@@ -204,6 +204,41 @@ export default function ListeningQuiz({ onBack }: { onBack: () => void }) {
         </div>
 
         {showResult && (
+          <div
+            className={clsx(
+              "rounded-lg p-4 flex items-center gap-3 border-2",
+              selected === current.correct
+                ? "bg-green-50 border-green-400"
+                : "bg-red-50 border-red-400"
+            )}
+          >
+            {selected === current.correct ? (
+              <>
+                <div className="bg-green-500 text-white rounded-full p-2 flex-shrink-0">
+                  <Check size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-green-800 text-lg">正解!</div>
+                  <div className="text-sm text-green-700">{current.correct}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-red-500 text-white rounded-full p-2 flex-shrink-0">
+                  <X size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-red-800 text-lg">不正解</div>
+                  <div className="text-sm text-red-700">
+                    正解は <strong>{current.correct}</strong>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {showResult && (
           <div className="bg-blue-50 p-3 rounded text-sm">
             <span className="text-slate-500">英語: </span>
             <span className="font-medium text-slate-800">{current.audio}</span>

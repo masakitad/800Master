@@ -290,6 +290,43 @@ export default function MockExamPage() {
           })}
         </div>
 
+        {showResult && current && (
+          <div
+            className={clsx(
+              "rounded-lg p-4 flex items-center gap-3 border-2",
+              selected === current.correctIndex
+                ? "bg-green-50 border-green-400"
+                : "bg-red-50 border-red-400"
+            )}
+          >
+            {selected === current.correctIndex ? (
+              <>
+                <div className="bg-green-500 text-white rounded-full p-2 flex-shrink-0">
+                  <Check size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-green-800 text-lg">正解!</div>
+                  <div className="text-sm text-green-700">
+                    {String.fromCharCode(65 + current.correctIndex)}. {current.choices[current.correctIndex]}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-red-500 text-white rounded-full p-2 flex-shrink-0">
+                  <X size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-red-800 text-lg">不正解</div>
+                  <div className="text-sm text-red-700">
+                    正解は <strong>{String.fromCharCode(65 + current.correctIndex)}. {current.choices[current.correctIndex]}</strong>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {showResult && (
           <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded text-sm whitespace-pre-wrap text-slate-700">
             <div className="text-xs font-bold text-amber-800 mb-1">解説</div>
