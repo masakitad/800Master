@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ToeicPart, ToeicQuestion } from "@/lib/types";
 import { getQuestionsByPart, estimateToeicScore } from "@/data/toeic-questions";
-import { addQuizResult, addStudyRecord } from "@/lib/storage";
+import { addQuizResult, addStudyRecord, recordIncorrectAnswer, markQuestionResolved } from "@/lib/storage";
 import { speak, stopSpeech } from "@/lib/speech";
 import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
 import { Check, X, ChevronRight, RotateCcw, Play, Eye, EyeOff, Headphones, BookText, ImageIcon, Trophy, Sparkles, Loader } from "lucide-react";
@@ -59,6 +59,7 @@ export default function ToeicPage() {
   const [imageCache, setImageCache] = useState<Record<string, string>>({});
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [bundledImageMissing, setBundledImageMissing] = useState<Record<string, boolean>>({});
   const audioTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
@@ -168,11 +169,16 @@ export default function ToeicPage() {
   }
 
   function handleAnswer() {
-    if (selected === null || !current) return;
+    if (selected === null || !current || !selectedPart) return;
     clearAudioTimers();
     stopSpeech();
     const isCorrect = selected === current.correctIndex;
     setAnswers([...answers, { questionId: current.id, selected, correct: isCorrect }]);
+    if (isCorrect) {
+      markQuestionResolved(current.id);
+    } else {
+      recordIncorrectAnswer(current.id, selectedPart);
+    }
     setShowResult(true);
     setChoicesTextVisible(true);
   }
@@ -333,54 +339,65 @@ export default function ToeicPage() {
       </div>
 
       <div className="card space-y-4">
-        {/* Part 1: 写真 (生成画像 or キャプション) */}
-        {selectedPart === "part1" && (current.photoCaption || current.photoPrompt) && (
-          <div className="space-y-2">
-            {imageCache[current.id] || current.imageUrl ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageCache[current.id] ?? current.imageUrl}
-                  alt={current.photoCaption ?? "TOEIC Part 1 photo"}
-                  className="w-full max-h-[400px] object-contain bg-slate-50"
-                />
-              </div>
-            ) : (
-              <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                <ImageIcon className="mx-auto text-slate-400 mb-3" size={48} />
-                <div className="text-sm text-slate-700 mb-1 font-medium">{current.photoCaption}</div>
-                <p className="text-xs text-slate-500 mb-3">
-                  実試験ではここに写真が表示されます。AI画像生成で再現することもできます。
-                </p>
-                <button
-                  onClick={generateImage}
-                  disabled={imageLoading}
-                  className="btn-primary text-sm inline-flex items-center gap-2 disabled:opacity-50"
-                >
-                  {imageLoading ? (
-                    <>
-                      <Loader className="animate-spin" size={16} /> 生成中...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={16} /> 写真を AI 生成
-                    </>
+        {/* Part 1: 写真 (生成済み画像 / バンドル画像 / 生成ボタン) */}
+        {selectedPart === "part1" && (current.photoCaption || current.photoPrompt) && (() => {
+          const bundledPath = `/images/toeic/${current.id}.png`;
+          const imageSrc =
+            imageCache[current.id] ??
+            current.imageUrl ??
+            (bundledImageMissing[current.id] ? null : bundledPath);
+          return (
+            <div className="space-y-2">
+              {imageSrc ? (
+                <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageSrc}
+                    alt={current.photoCaption ?? "TOEIC Part 1 photo"}
+                    className="w-full max-h-[400px] object-contain bg-slate-50"
+                    onError={() => setBundledImageMissing((p) => ({ ...p, [current.id]: true }))}
+                  />
+                </div>
+              ) : (
+                <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                  <ImageIcon className="mx-auto text-slate-400 mb-3" size={48} />
+                  <div className="text-sm text-slate-700 mb-1 font-medium">{current.photoCaption}</div>
+                  <p className="text-xs text-slate-500 mb-3">
+                    実試験ではここに写真が表示されます。AI画像生成で再現することもできます。
+                  </p>
+                  <button
+                    onClick={generateImage}
+                    disabled={imageLoading}
+                    className="btn-primary text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {imageLoading ? (
+                      <>
+                        <Loader className="animate-spin" size={16} /> 生成中...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} /> 写真を AI 生成
+                      </>
+                    )}
+                  </button>
+                  {imageError && (
+                    <div className="text-xs text-red-600 mt-2">
+                      {imageError.includes("not configured")
+                        ? "画像生成には OPENAI_API_KEY の設定が必要です"
+                        : imageError}
+                    </div>
                   )}
-                </button>
-                {imageError && (
-                  <div className="text-xs text-red-600 mt-2">
-                    {imageError.includes("not configured")
-                      ? "画像生成には OPENAI_API_KEY の設定が必要です"
-                      : imageError}
-                  </div>
-                )}
-              </div>
-            )}
-            {showResult && (imageCache[current.id] || current.imageUrl) && current.photoCaption && (
-              <div className="text-xs text-slate-500 italic">写真の状況: {current.photoCaption}</div>
-            )}
-          </div>
-        )}
+                  <p className="text-xs text-slate-400 mt-3">
+                    💡 ヒント: <code>npm run gen:part1-images</code> で全Part1の写真を一括生成・バンドルできます
+                  </p>
+                </div>
+              )}
+              {showResult && imageSrc && current.photoCaption && (
+                <div className="text-xs text-slate-500 italic">写真の状況: {current.photoCaption}</div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* リーディング用の passage */}
         {partInfo.category === "reading" && current.passage && (

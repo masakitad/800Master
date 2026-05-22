@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadProgress, resetProgress } from "@/lib/storage";
+import { loadProgress, resetProgress, setGoals } from "@/lib/storage";
 import { UserProgress, ToeicPart } from "@/lib/types";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 import { Flame, TrendingUp, Clock, Target, Calendar, Award, AlertTriangle, type LucideIcon } from "lucide-react";
@@ -78,6 +78,65 @@ export default function ProgressPage() {
           <AlertTriangle size={14} /> データリセット
         </button>
       </header>
+
+      <section className="card">
+        <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+          <Target size={20} className="text-indigo-600" /> 学習目標の設定
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">1日の目標 (分)</label>
+            <input
+              type="number"
+              min="5"
+              max="240"
+              step="5"
+              defaultValue={progress.goals?.dailyMinutesTarget ?? 20}
+              onBlur={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!Number.isNaN(v)) {
+                  setGoals({ dailyMinutesTarget: v });
+                  setProgress(loadProgress());
+                }
+              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">目標スコア (TOEIC)</label>
+            <input
+              type="number"
+              min="0"
+              max="990"
+              step="10"
+              defaultValue={progress.goals?.targetScore ?? ""}
+              placeholder="例: 800"
+              onBlur={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!Number.isNaN(v)) {
+                  setGoals({ targetScore: v });
+                  setProgress(loadProgress());
+                }
+              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">目標達成日</label>
+            <input
+              type="date"
+              defaultValue={progress.goals?.targetDate ?? ""}
+              onBlur={(e) => {
+                if (e.target.value) {
+                  setGoals({ targetDate: e.target.value });
+                  setProgress(loadProgress());
+                }
+              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+            />
+          </div>
+        </div>
+      </section>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={Flame} label="連続学習日数" value={progress.currentStreak} unit="日" color="orange" />

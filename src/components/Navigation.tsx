@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BookText, MessageSquare, Bot, BarChart3, Ear, Trophy, Mic } from "lucide-react";
+import { Home, BookOpen, BookText, MessageSquare, Bot, BarChart3, Ear, Trophy, Mic, RefreshCw } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
   { href: "/", label: "ホーム", icon: Home },
   { href: "/toeic", label: "TOEIC", icon: BookOpen },
   { href: "/mock", label: "模試", icon: Trophy },
+  { href: "/review", label: "復習", icon: RefreshCw },
   { href: "/listening", label: "リスニング", icon: Ear },
   { href: "/pronunciation", label: "発音", icon: Mic },
   { href: "/vocab", label: "単語", icon: BookText },

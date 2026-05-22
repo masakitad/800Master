@@ -2,16 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, Trophy, Mic, type LucideIcon } from "lucide-react";
-import { loadProgress } from "@/lib/storage";
+import { BookOpen, BookText, MessageSquare, Bot, Flame, TrendingUp, Clock, Target, Ear, Trophy, Mic, RefreshCw, type LucideIcon } from "lucide-react";
+import { loadProgress, getTodayMinutes, listIncorrectQuestions } from "@/lib/storage";
 import { UserProgress } from "@/lib/types";
 import { estimateToeicScore } from "@/data/toeic-questions";
 
 export default function HomePage() {
   const [progress, setProgress] = useState<UserProgress | null>(null);
+  const [todayMinutes, setTodayMinutes] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     setProgress(loadProgress());
+    setTodayMinutes(getTodayMinutes());
+    setReviewCount(listIncorrectQuestions({ onlyUnresolved: true }).length);
   }, []);
 
   const latestScore = progress?.quizResults && progress.quizResults.length > 0
@@ -20,6 +24,8 @@ export default function HomePage() {
         progress.quizResults[progress.quizResults.length - 1].totalCount
       )
     : 0;
+  const dailyTarget = progress?.goals?.dailyMinutesTarget ?? 20;
+  const todayProgressPct = Math.min(100, Math.round((todayMinutes / dailyTarget) * 100));
 
   return (
     <div className="space-y-6">
@@ -28,12 +34,50 @@ export default function HomePage() {
         <p className="text-primary-100">TOEIC 800点突破を目指す総合英会話学習アプリ</p>
       </header>
 
+      <section className="card bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Target className="text-indigo-600" size={20} />
+            <span className="font-bold text-slate-800">今日の学習目標</span>
+          </div>
+          <span className="text-sm font-bold text-indigo-700">
+            {todayMinutes} / {dailyTarget} 分
+          </span>
+        </div>
+        <div className="bg-white rounded-full h-3 overflow-hidden">
+          <div
+            className={`h-full transition-all ${todayProgressPct >= 100 ? "bg-green-500" : "bg-indigo-500"}`}
+            style={{ width: `${todayProgressPct}%` }}
+          />
+        </div>
+        {todayProgressPct >= 100 && (
+          <p className="text-xs text-green-700 mt-2 font-medium">🎉 今日の目標達成!</p>
+        )}
+      </section>
+
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Flame} label="連続学習" value={progress?.currentStreak ?? 0} unit="日" color="orange" />
         <StatCard icon={TrendingUp} label="最新スコア" value={latestScore} unit="点" color="green" />
         <StatCard icon={Clock} label="総学習時間" value={progress?.totalStudyMinutes ?? 0} unit="分" color="blue" />
         <StatCard icon={Target} label="最長連続" value={progress?.longestStreak ?? 0} unit="日" color="purple" />
       </section>
+
+      {reviewCount > 0 && (
+        <Link
+          href="/review"
+          className="block card bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="bg-rose-500 text-white p-3 rounded-xl">
+              <RefreshCw size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800">復習リストに <span className="text-rose-600">{reviewCount}</span> 問あります</h3>
+              <p className="text-sm text-slate-600 mt-0.5">間違えた問題を再演習して習得済みに</p>
+            </div>
+          </div>
+        </Link>
+      )}
 
       <section>
         <h2 className="text-xl font-bold mb-4 text-slate-800">学習メニュー</h2>

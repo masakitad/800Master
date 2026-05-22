@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ToeicQuestion } from "@/lib/types";
 import { getMockExamQuestions, estimateToeicScore } from "@/data/toeic-questions";
-import { addQuizResult, addStudyRecord } from "@/lib/storage";
+import { addQuizResult, addStudyRecord, recordIncorrectAnswer, markQuestionResolved } from "@/lib/storage";
 import { speak, stopSpeech } from "@/lib/speech";
 import { loadVoiceSettings, getVoiceByURI } from "@/components/VoiceSettings";
 import { Check, X, ChevronRight, RotateCcw, Play, Trophy, Clock } from "lucide-react";
@@ -77,6 +77,11 @@ export default function MockExamPage() {
     stopSpeech();
     const correct = selected === current.correctIndex;
     setAnswers([...answers, { part: current.part, correct }]);
+    if (correct) {
+      markQuestionResolved(current.id);
+    } else {
+      recordIncorrectAnswer(current.id, current.part);
+    }
     setShowResult(true);
   }
 

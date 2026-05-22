@@ -99,5 +99,29 @@ PR ごとにプレビューURLも自動生成されます。
 - `.nvmrc`: Node.js バージョン (20)
 - `.github/workflows/ci.yml`: PR時に build verification を実行
 
+## TOEIC Part 1 用画像の一括生成
+
+OpenAI の画像生成APIを使い、Part 1 全問題の写真を一括で生成して
+`public/images/toeic/` にバンドルできます。
+
+### 使い方
+
+```bash
+# 環境変数を設定 (.env.local に書いても良い)
+export OPENAI_API_KEY=sk-...
+
+# 全Part1問題の写真を生成 (約8枚、$0.04/枚程度)
+npm run gen:part1-images
+
+# オプション
+node scripts/generate-part1-images.mjs --force         # 既存ファイルを上書き
+node scripts/generate-part1-images.mjs --part p1-3     # 特定問題のみ生成
+node scripts/generate-part1-images.mjs --size 1024x1024 # サイズ指定
+```
+
+生成された PNG を `git add` してコミットすれば、デプロイ後はユーザーが
+API キーなしで写真を見られます。アプリ側は `/images/toeic/p1-N.png` を
+自動参照し、存在しない場合は UI 上の「AI生成」ボタンへフォールバックします。
+
 ## ライセンス
 個人利用・学習目的での使用を想定しています。

@@ -65,10 +65,26 @@ export interface VocabProgress {
   correctStreak: number;
 }
 
+export interface IncorrectQuestion {
+  questionId: string;
+  part: ToeicPart;
+  wrongCount: number;
+  lastWrongDate: string;
+  resolved?: boolean;
+}
+
+export interface StudyGoals {
+  dailyMinutesTarget: number;
+  targetScore?: number;
+  targetDate?: string;
+}
+
 export interface UserProgress {
   studyRecords: StudyRecord[];
   quizResults: QuizResult[];
   vocabProgress: Record<string, VocabProgress>;
+  incorrectQuestions: Record<string, IncorrectQuestion>;
+  goals: StudyGoals;
   currentStreak: number;
   longestStreak: number;
   totalStudyMinutes: number;
