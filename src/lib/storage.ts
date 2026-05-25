@@ -1,4 +1,4 @@
-import { UserProgress, StudyRecord, QuizResult, VocabProgress } from "./types";
+import { UserProgress, StudyRecord, QuizResult, VocabProgress, IncorrectQuestion, StudyGoals, ToeicPart } from "./types";
 
 const STORAGE_KEY = "800master_progress";
 
@@ -6,6 +6,8 @@ const defaultProgress: UserProgress = {
   studyRecords: [],
   quizResults: [],
   vocabProgress: {},
+  incorrectQuestions: {},
+  goals: { dailyMinutesTarget: 20 },
   currentStreak: 0,
   longestStreak: 0,
   totalStudyMinutes: 0,
@@ -122,4 +124,49 @@ export function getDueWords(allWordIds: string[]): string[] {
     if (!p) return true;
     return new Date(p.nextReview) <= now;
   });
+}
+
+export function recordIncorrectAnswer(questionId: string, part: ToeicPart): UserProgress {
+  const progress = loadProgress();
+  const existing = progress.incorrectQuestions[questionId];
+  progress.incorrectQuestions[questionId] = {
+    questionId,
+    part,
+    wrongCount: (existing?.wrongCount ?? 0) + 1,
+    lastWrongDate: new Date().toISOString(),
+    resolved: false,
+  };
+  saveProgress(progress);
+  return progress;
+}
+
+export function markQuestionResolved(questionId: string): UserProgress {
+  const progress = loadProgress();
+  const existing = progress.incorrectQuestions[questionId];
+  if (existing) {
+    progress.incorrectQuestions[questionId] = { ...existing, resolved: true };
+    saveProgress(progress);
+  }
+  return progress;
+}
+
+export function listIncorrectQuestions(opts?: { onlyUnresolved?: boolean }): IncorrectQuestion[] {
+  const progress = loadProgress();
+  const all = Object.values(progress.incorrectQuestions);
+  return opts?.onlyUnresolved ? all.filter((q) => !q.resolved) : all;
+}
+
+export function setGoals(goals: Partial<StudyGoals>): UserProgress {
+  const progress = loadProgress();
+  progress.goals = { ...progress.goals, ...goals };
+  saveProgress(progress);
+  return progress;
+}
+
+export function getTodayMinutes(): number {
+  const progress = loadProgress();
+  const today = todayIso();
+  return progress.studyRecords
+    .filter((r) => r.date === today)
+    .reduce((sum, r) => sum + r.durationMinutes, 0);
 }
